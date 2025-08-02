@@ -13,65 +13,71 @@ import {
   FaShare,
   FaEllipsisH,
 } from "react-icons/fa";
-// import CreatePostDialog from "../components/CreatePostDialog";
+import axios from "axios";
+import { toast } from "react-toastify";
+import CreatePostDialog from "../components/CreatePostDialog";
 
 const Feed = () => {
-  const [newPost, setNewPost] = useState("");
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [posts] = useState([
-    {
-      id: 1,
-      user: "Sarah Johnson",
-      title: "Product Manager at Google",
-      profileImg: "https://randomuser.me/api/portraits/women/1.jpg",
-      postImg: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80",
-      content: "Excited to announce that our team just launched a new feature that will help millions of users worldwide! 🚀",
-      timestamp: "2024-01-15T10:30:00Z",
-      likes: 124,
-      comments: 28,
-    },
-    {
-      id: 2,
-      user: "Mike Chen",
-      title: "Senior Software Engineer",
-      profileImg: "https://randomuser.me/api/portraits/men/2.jpg",
-      content: "Just finished reading 'Clean Code' by Robert Martin. Highly recommend it to all developers! The principles in this book have completely changed how I approach coding. 📚",
-      timestamp: "2024-01-14T15:45:00Z",
-      likes: 89,
-      comments: 15,
-    },
-    {
-      id: 3,
-      user: "Emily Davis",
-      title: "UX Designer at Microsoft",
-      profileImg: "https://randomuser.me/api/portraits/women/3.jpg",
-      postImg: "https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?auto=format&fit=crop&w=800&q=80",
-      content: "Design thinking workshop was incredible today! Love collaborating with cross-functional teams to solve complex user problems. 🎨",
-      timestamp: "2024-01-13T09:20:00Z",
-      likes: 156,
-      comments: 32,
-    },
-  ]);
+  const [posts, setPosts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const handleScroll = () => {
-      const scrollTop = window.scrollY;
-      setIsScrolled(scrollTop > 10);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    fetchPosts();
   }, []);
+
+  const fetchPosts = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get("http://localhost:5000/api/posts", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.data.success) {
+        setPosts(response.data.posts);
+      }
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+      toast.error("Failed to load posts");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleCreatePost = async (formData) => {
     try {
-      console.log("Creating post:", formData);
-      // Add your API call here
+      const token = localStorage.getItem("token");
+      
+      const response = await axios.post(
+        "http://localhost:5000/api/posts",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (response.data.success) {
+        toast.success("Post created successfully!");
+        setPosts([response.data.post, ...posts]);
+      }
     } catch (error) {
       console.error("Error creating post:", error);
+      toast.error("Failed to create post");
       throw error;
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">Loading posts...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -180,68 +186,55 @@ const Feed = () => {
 
             {/* Posts */}
             <div className="space-y-6">
-              {posts.map((post, index) => (
-                <motion.div
-                  key={post.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
-                >
-                  {/* Post Header */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex gap-3">
-                      <img
-                        src={post.profileImg}
-                        alt={post.user}
-                        className="w-12 h-12 rounded-full object-cover"
-                      />
-                      <div>
-                        <h4 className="font-semibold text-gray-900">{post.user}</h4>
-                        <p className="text-sm text-gray-600">{post.title}</p>
-                        <p className="text-xs text-gray-500">
-                          {new Date(post.timestamp).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
-                        </p>
+              {posts.length === 0 ? (
+                <div className="text-center text-gray-500 py-8">
+                  No posts available. Be the first to post!
+                </div>
+              ) : (
+                posts.map((post, index) => (
+                  <motion.div
+                    key={post._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+                  >
+                    {/* Post Header */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex gap-3">
+                        <img
+                          src={post.user.profileImg || "https://randomuser.me/api/portraits/men/1.jpg"}
+                          alt={post.user.name}
+                          className="w-12 h-12 rounded-full object-cover"
+                        />
+                        <div>
+                          <h4 className="font-semibold text-gray-900">{post.user.name}</h4>
+                          <p className="text-sm text-gray-600">{post.user.title || "User"}</p>
+                          <p className="text-xs text-gray-500">
+                            {new Date(post.createdAt).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                    <FaEllipsisH className="text-gray-400 cursor-pointer" />
-                  </div>
 
-                  {/* Post Content */}
-                  <p className="text-gray-800 mb-4">{post.content}</p>
+                    {/* Post Content */}
+                    <p className="text-gray-800 mb-4">{post.content}</p>
 
-                  {/* Post Image */}
-                  {post.postImg && (
-                    <img
-                      src={post.postImg}
-                      alt="Post content"
-                      className="w-full rounded-lg mb-4 object-cover max-h-96"
-                    />
-                  )}
-
-                  {/* Post Actions */}
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                    <div className="flex items-center gap-6">
-                      <button className="flex items-center gap-2 text-gray-600 hover:text-red-500 transition">
-                        <FaHeart />
-                        <span>{post.likes}</span>
-                      </button>
-                      <button className="flex items-center gap-2 text-gray-600 hover:text-blue-500 transition">
-                        <FaComment />
-                        <span>{post.comments}</span>
-                      </button>
-                      <button className="flex items-center gap-2 text-gray-600 hover:text-green-500 transition">
-                        <FaShare />
-                        <span>Share</span>
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+                    {/* Post Image */}
+                    {post.image && (
+                      <img
+                        src={post.image}
+                        alt="Post content"
+                        className="w-full rounded-lg mb-4 object-cover max-h-96"
+                      />
+                    )}
+                  </motion.div>
+                ))
+              )}
             </div>
           </div>
 

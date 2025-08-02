@@ -15,6 +15,7 @@ import {
   FaShare,
   FaSignOutAlt,
   FaHome,
+  FaTrash,
 } from "react-icons/fa";
 import {
   DEFAULT_IMAGES,
@@ -35,34 +36,8 @@ const ProfilePage = () => {
     coverImg: "",
   });
 
-  const [posts] = useState([
-    {
-      id: 1,
-      content:
-        "Just shipped a new feature that improves user experience by 40%! Excited to see the impact. 🚀",
-      timestamp: "2024-01-15T10:30:00Z",
-      likes: 45,
-      comments: 12,
-      image:
-        "https://images.unsplash.com/photo-1551650975-87deedd944c3?auto=format&fit=crop&w=800&q=80",
-    },
-    {
-      id: 2,
-      content:
-        "Attending React Conference 2024. Amazing insights on the future of web development!",
-      timestamp: "2024-01-10T14:20:00Z",
-      likes: 32,
-      comments: 8,
-    },
-    {
-      id: 3,
-      content:
-        "Mentoring junior developers is one of the most rewarding parts of my job. Seeing them grow and succeed makes everything worthwhile. 💪",
-      timestamp: "2024-01-05T09:15:00Z",
-      likes: 67,
-      comments: 15,
-    },
-  ]);
+  const [posts, setPosts] = useState([]);
+  const [isLoadingPosts, setIsLoadingPosts] = useState(true);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedUser, setEditedUser] = useState(user);
@@ -72,6 +47,7 @@ const ProfilePage = () => {
   // Fetch user profile on component mount
   useEffect(() => {
     fetchUserProfile();
+    fetchUserPosts();
   }, []);
 
   useEffect(() => {
@@ -92,7 +68,6 @@ const ProfilePage = () => {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            
           },
         }
       );
@@ -236,19 +211,85 @@ const ProfilePage = () => {
     navigate("/login");
   };
 
+  const fetchUserPosts = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get("http://localhost:5000/api/posts/user", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.data.success) {
+        setPosts(response.data.posts);
+      }
+    } catch (error) {
+      console.error("Error fetching user posts:", error);
+      toast.error("Failed to load your posts");
+    } finally {
+      setIsLoadingPosts(false);
+    }
+  };
+
+  const handleDeletePost = async (postId) => {
+    if (!window.confirm("Are you sure you want to delete this post?")) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.delete(
+        `http://localhost:5000/api/posts/${postId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        toast.success("Post deleted successfully!");
+        setPosts(posts.filter((post) => post._id !== postId));
+      }
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      toast.error("Failed to delete post");
+    }
+  };
+
+  const formatTimeAgo = (dateString) => {
+    const now = new Date();
+    const postDate = new Date(dateString);
+    const diffInSeconds = Math.floor((now - postDate) / 1000);
+
+    if (diffInSeconds < 60) return "Just now";
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400)
+      return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    if (diffInSeconds < 604800)
+      return `${Math.floor(diffInSeconds / 86400)}d ago`;
+
+    return postDate.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year:
+        postDate.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-900">
       {/* Header */}
       <header
         className={`sticky top-0 z-50 transition-all duration-300 ${
           isScrolled
-            ? "bg-white/80 backdrop-blur-md shadow-lg border-b border-gray-200/50"
-            : "bg-white shadow-sm border-b border-gray-200"
+            ? " backdrop-blur-md shadow-lg border-b border-gray-200/50"
+            : " shadow-sm border-b border-gray-200"
         }`}
       >
         <div className="max-w-6xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-blue-600">TalentThread</h1>
+            <h1 className="text-2xl font-bold   text-blue-600">TalentThread</h1>
             <div className="flex items-center gap-4">
               <Link
                 to="/dashboard"
@@ -442,71 +483,69 @@ const ProfilePage = () => {
           transition={{ delay: 0.2 }}
           className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
         >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900">Activity</h2>
-            <span className="text-sm text-gray-500">{posts.length} posts</span>
-          </div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-6">
+            Your Posts
+          </h3>
 
-          <div className="space-y-6">
-            {posts.map((post, index) => (
-              <motion.div
-                key={post.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 + index * 0.1 }}
-                className="border-b border-gray-100 pb-6 last:border-b-0 last:pb-0"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex gap-3">
-                    <img
-                      src={generateAvatarUrl(user.name)}
-                      alt={user.name}
-                      className="w-12 h-12 rounded-full object-cover"
-                    />
-                    <div>
-                      <h4 className="font-semibold text-gray-900">
-                        {user.name}
-                      </h4>
-                      <p className="text-sm text-gray-600">{user.title}</p>
-                      <p className="text-xs text-gray-500">
-                        {new Date(post.timestamp).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}
-                      </p>
+          {isLoadingPosts ? (
+            <div className="text-center py-8 text-gray-500">
+              Loading posts...
+            </div>
+          ) : posts.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              No posts yet. Share your first post!
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {posts.map((post, index) => (
+                <motion.div
+                  key={post._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 + index * 0.1 }}
+                  className="border-b border-gray-100 pb-6 last:border-b-0 last:pb-0"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex gap-3">
+                      <img
+                        src={user.profileImg || generateAvatarUrl(user.name)}
+                        alt={user.name}
+                        className="w-12 h-12 rounded-full object-cover"
+                      />
+                      <div>
+                        <h4 className="font-semibold text-gray-900">
+                          {user.name}
+                        </h4>
+                        <p className="text-sm text-gray-600">{user.title}</p>
+                        <p className="text-xs text-gray-500">
+                          {formatTimeAgo(post.createdAt)}
+                        </p>
+                      </div>
                     </div>
+
+                    {/* Delete button */}
+                    <button
+                      onClick={() => handleDeletePost(post._id)}
+                      className="text-gray-400 hover:text-red-500 transition p-2 rounded-lg hover:bg-gray-100"
+                      title="Delete post"
+                    >
+                      <FaTrash size={16} />
+                    </button>
                   </div>
-                  <FaEllipsisH className="text-gray-400 cursor-pointer" />
-                </div>
 
-                <p className="text-gray-800 mb-3">{post.content}</p>
+                  <p className="text-gray-800 mb-3">{post.content}</p>
 
-                {post.image && (
-                  <img
-                    src={post.image}
-                    alt="Post content"
-                    className="w-full rounded-lg mb-3 object-cover max-h-96"
-                  />
-                )}
-
-                <div className="flex items-center gap-6 text-sm text-gray-500">
-                  <button className="flex items-center gap-2 hover:text-red-500 transition">
-                    <FaHeart />
-                    <span>{post.likes}</span>
-                  </button>
-                  <button className="flex items-center gap-2 hover:text-blue-500 transition">
-                    <FaComment />
-                    <span>{post.comments}</span>
-                  </button>
-                  <button className="flex items-center gap-2 hover:text-green-500 transition">
-                    <FaShare />
-                    <span>Share</span>
-                  </button>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                  {post.image && (
+                    <img
+                      src={post.image}
+                      alt="Post content"
+                      className="w-full rounded-lg mb-3 object-cover max-h-96"
+                    />
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          )}
         </motion.div>
       </div>
     </div>
@@ -514,4 +553,3 @@ const ProfilePage = () => {
 };
 
 export default ProfilePage;
-

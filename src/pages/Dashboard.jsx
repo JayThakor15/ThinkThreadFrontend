@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import axios from "axios";
 import {
   FaBars,
   FaTimes,
@@ -23,27 +24,8 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [posts, setPosts] = useState([
-    {
-      id: 1,
-      user: "Sarah Johnson",
-      profileImg: "https://randomuser.me/api/portraits/women/1.jpg",
-      postImg: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80",
-      content: "Excited to share that I've just completed my certification in Full Stack Development! 🎉",
-      timestamp: "2024-01-15T10:30:00Z",
-      likes: 24,
-      comments: 8,
-    },
-    {
-      id: 2,
-      user: "Mike Chen",
-      profileImg: "https://randomuser.me/api/portraits/men/2.jpg",
-      content: "Just finished an amazing project using React and Node.js. The learning never stops! 💻",
-      timestamp: "2024-01-14T15:45:00Z",
-      likes: 18,
-      comments: 5,
-    },
-  ]);
+  const [posts, setPosts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const userName = JSON.parse(localStorage.getItem('user'))?.name || "User";
 
@@ -69,24 +51,53 @@ const Dashboard = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const fetchPosts = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get("http://localhost:5000/api/posts", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.data.success) {
+        setPosts(response.data.posts);
+      }
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+      toast.error("Failed to load posts");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
   const handleCreatePost = async (formData) => {
     try {
-      console.log("Creating post with data:", formData);
+      const token = localStorage.getItem("token");
       
-      const newPost = {
-        id: posts.length + 1,
-        user: userName,
-        profileImg: "https://randomuser.me/api/portraits/men/1.jpg",
-        postImg: formData.get('postImage') ? URL.createObjectURL(formData.get('postImage')) : null,
-        content: formData.get('caption'),
-        timestamp: new Date().toISOString(),
-        likes: 0,
-        comments: 0,
-      };
-      
-      setPosts([newPost, ...posts]);
+      const response = await axios.post(
+        "http://localhost:5000/api/posts",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (response.data.success) {
+        toast.success("Post created successfully!");
+        // Add new post to the beginning of posts array
+        setPosts([response.data.post, ...posts]);
+      }
     } catch (error) {
       console.error("Error creating post:", error);
+      toast.error("Failed to create post");
       throw error;
     }
   };
@@ -95,6 +106,31 @@ const Dashboard = () => {
     { icon: FaHome, label: "Home", path: "/dashboard" },
 
   ];
+
+  const formatTimeAgo = (dateString) => {
+    const now = new Date();
+    const postDate = new Date(dateString);
+    const diffInSeconds = Math.floor((now - postDate) / 1000);
+
+    if (diffInSeconds < 60) return "Just now";
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+    
+    return postDate.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: postDate.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-white">Loading posts...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-gray-900 text-white">
@@ -186,60 +222,48 @@ const Dashboard = () => {
         {/* Posts Feed */}
         <div className="flex-1 overflow-y-auto p-6">
           <div className="max-w-2xl mx-auto space-y-6">
-            {posts.map((post, index) => (
-              <motion.div
-                key={post.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-gray-800 rounded-xl p-6 shadow-lg"
-              >
-                {/* Post Header */}
-                <div className="flex items-center gap-3 mb-4">
-                  <img
-                    src={post.profileImg}
-                    alt={post.user}
-                    className="w-12 h-12 rounded-full object-cover"
-                  />
-                  <div>
-                    <h4 className="font-semibold text-white">{post.user}</h4>
-                    <p className="text-sm text-gray-400">
-                      {new Date(post.timestamp).toLocaleDateString()}
-                    </p>
+            {posts.length === 0 ? (
+              <div className="text-center text-gray-400 py-8">
+                No posts yet. Create your first post!
+              </div>
+            ) : (
+              posts.map((post, index) => (
+                <motion.div
+                  key={post._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-gray-800 rounded-xl p-6 shadow-lg"
+                >
+                  {/* Post Header */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <img
+                      src={post.user.profileImg || "https://randomuser.me/api/portraits/men/1.jpg"}
+                      alt={post.user.name}
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
+                    <div>
+                      <h4 className="font-semibold text-white">{post.user.name}</h4>
+                      <p className="text-sm text-gray-400">
+                        {formatTimeAgo(post.createdAt)}
+                      </p>
+                    </div>
                   </div>
-                </div>
 
-                {/* Post Content */}
-                <p className="text-gray-300 mb-4">{post.content}</p>
+                  {/* Post Content */}
+                  <p className="text-gray-300 mb-4">{post.content}</p>
 
-                {/* Post Image */}
-                {post.postImg && (
-                  <img
-                    src={post.postImg}
-                    alt="Post content"
-                    className="w-full rounded-lg mb-4 object-cover max-h-96"
-                  />
-                )}
-
-                {/* Post Actions */}
-                <div className="flex items-center justify-between pt-4 border-t border-gray-700">
-                  <div className="flex items-center gap-6">
-                    <button className="flex items-center gap-2 text-gray-400 hover:text-red-500 transition">
-                      <FaHeart />
-                      <span>{post.likes}</span>
-                    </button>
-                    <button className="flex items-center gap-2 text-gray-400 hover:text-blue-400 transition">
-                      <FaComment />
-                      <span>{post.comments}</span>
-                    </button>
-                    <button className="flex items-center gap-2 text-gray-400 hover:text-green-400 transition">
-                      <FaShare />
-                      <span>Share</span>
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+                  {/* Post Image */}
+                  {post.image && (
+                    <img
+                      src={post.image}
+                      alt="Post content"
+                      className="w-full rounded-lg object-cover max-h-96"
+                    />
+                  )}
+                </motion.div>
+              ))
+            )}
           </div>
         </div>
       </main>
@@ -248,3 +272,5 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
+

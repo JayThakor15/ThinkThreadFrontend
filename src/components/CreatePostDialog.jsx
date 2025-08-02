@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { FaImage, FaVideo, FaSmile, FaTimes } from 'react-icons/fa';
+import { FaImage, FaVideo, FaSmile, FaTimes, FaCamera } from 'react-icons/fa';
 import {
   Dialog,
   DialogContent,
@@ -11,104 +11,98 @@ import {
 
 const CreatePostDialog = ({ trigger, onPostCreate }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [content, setContent] = useState('');
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [content, setContent] = useState("");
+  const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const user = JSON.parse(localStorage.getItem('user')) || { name: 'User' };
-
-  const handleImageSelect = (e) => {
+  const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setSelectedImage(file);
-      const reader = new FileReader();
-      reader.onload = (e) => setImagePreview(e.target.result);
-      reader.readAsDataURL(file);
-    }
-  };
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size should be less than 5MB");
+        return;
+      }
+      
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please select a valid image file");
+        return;
+      }
 
-  const handleRemoveImage = () => {
-    setSelectedImage(null);
-    setImagePreview(null);
+      setImage(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!content.trim() && !selectedImage) {
+    if (!content.trim()) {
+      toast.error("Please write something to post");
       return;
     }
 
     setIsLoading(true);
-
+    
     try {
       const formData = new FormData();
-      formData.append('caption', content);
-      if (selectedImage) {
-        formData.append('postImage', selectedImage);
+      formData.append("content", content.trim());
+      
+      if (image) {
+        formData.append("postImage", image);
       }
 
       await onPostCreate(formData);
       
       // Reset form
-      setContent('');
-      setSelectedImage(null);
+      setContent("");
+      setImage(null);
       setImagePreview(null);
       setIsOpen(false);
     } catch (error) {
-      console.error('Error creating post:', error);
+      console.error("Error creating post:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const defaultTrigger = (
-    <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-      <FaImage />
-      Create Post
-    </button>
-  );
-
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        {trigger || defaultTrigger}
+        {trigger}
       </DialogTrigger>
-      
-      <DialogContent className="bg-gray-800 border-gray-700 text-white max-w-lg">
+      <DialogContent className="sm:max-w-md bg-gray-800 text-white border-gray-700">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-white">
-            Create Post
-          </DialogTitle>
+          <h2 className="text-xl font-semibold">Create Post</h2>
         </DialogHeader>
-
+        
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* User Info */}
-          <div className="flex items-center gap-3 pb-4 border-b border-gray-700">
-            <img
-              src="https://randomuser.me/api/portraits/men/1.jpg"
-              alt="Profile"
-              className="w-12 h-12 rounded-full"
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="What's on your mind?"
+            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 resize-none"
+            rows={4}
+            maxLength={500}
+          />
+          
+          <div className="flex items-center gap-4">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="hidden"
+              id="post-image"
             />
-            <div>
-              <h4 className="font-semibold text-white">{user.name}</h4>
-              <p className="text-sm text-gray-400">Public</p>
-            </div>
+            <label
+              htmlFor="post-image"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition cursor-pointer"
+            >
+              <FaCamera size={16} />
+              Add Photo
+            </label>
           </div>
 
-          {/* Content Input */}
-          <div>
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="What's on your mind?"
-              className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              rows={4}
-            />
-          </div>
-
-          {/* Image Preview */}
           {imagePreview && (
             <div className="relative">
               <img
@@ -118,52 +112,33 @@ const CreatePostDialog = ({ trigger, onPostCreate }) => {
               />
               <button
                 type="button"
-                onClick={handleRemoveImage}
-                className="absolute top-2 right-2 p-1 bg-gray-900/70 text-white rounded-full hover:bg-gray-900 transition"
+                onClick={() => {
+                  setImage(null);
+                  setImagePreview(null);
+                }}
+                className="absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full hover:bg-red-700"
               >
-                <FaTimes />
+                ×
               </button>
             </div>
           )}
 
-          {/* Media Options */}
-          <div className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
-            <span className="text-sm text-gray-300">Add to your post</span>
-            <div className="flex items-center gap-3">
-              <label className="cursor-pointer p-2 hover:bg-gray-600 rounded-lg transition">
-                <FaImage className="text-green-400" />
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageSelect}
-                  className="hidden"
-                />
-              </label>
-              <button
-                type="button"
-                className="p-2 hover:bg-gray-600 rounded-lg transition"
-              >
-                <FaVideo className="text-blue-400" />
-              </button>
-              <button
-                type="button"
-                className="p-2 hover:bg-gray-600 rounded-lg transition"
-              >
-                <FaSmile className="text-yellow-400" />
-              </button>
-            </div>
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="px-4 py-2 text-gray-400 hover:text-white transition"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading || !content.trim()}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+            >
+              {isLoading ? "Posting..." : "Post"}
+            </button>
           </div>
-
-          {/* Submit Button */}
-          <motion.button
-            type="submit"
-            disabled={(!content.trim() && !selectedImage) || isLoading}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? 'Posting...' : 'Post'}
-          </motion.button>
         </form>
       </DialogContent>
     </Dialog>
