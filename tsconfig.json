@@ -5,7 +5,9 @@
     "moduleResolution": "Node",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["Frotend/src/*"]
+      "@/*": ["src/*"]
     }
-  }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
