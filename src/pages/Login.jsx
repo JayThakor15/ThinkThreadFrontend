@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash, FaGoogle, FaLinkedin } from "react-icons/fa";
-import { toast } from "react-toastify";
+import { useToast } from "../contexts/ToastContext";
 import axios from "axios";
 
 const Login = () => {
@@ -13,6 +13,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleChange = (e) => {
     setFormData({
@@ -28,24 +29,19 @@ const Login = () => {
     try {
       const response = await axios.post(
         "http://localhost:5000/api/auth/login",
-        {
-          email: formData.email,
-          password: formData.password,
-        }
+        formData
       );
 
       if (response.data.success) {
-        // Store token and user data
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("user", JSON.stringify(response.data.user));
-
-        toast.success(response.data.message);
+        toast.success("Welcome back!", "Login successful");
         navigate("/dashboard");
       }
     } catch (error) {
-      const errorMessage =
-        error.response?.data?.message || "Login failed. Please try again.";
-      toast.error(errorMessage);
+      console.error("Login error:", error);
+      const errorMessage = error.response?.data?.message || "Login failed";
+      toast.error("Login failed", errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -166,3 +162,4 @@ const Login = () => {
 };
 
 export default Login;
+

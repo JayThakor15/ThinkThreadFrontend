@@ -16,6 +16,7 @@ import {
   FaSignOutAlt,
   FaHome,
   FaTrash,
+  FaEnvelope,
 } from "react-icons/fa";
 import {
   DEFAULT_IMAGES,
@@ -288,30 +289,27 @@ const ProfilePage = () => {
         }`}
       >
         <div className="max-w-6xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold   text-blue-600">TalentThread</h1>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <h1 className="text-xl lg:text-2xl font-bold text-blue-600">TalentThread</h1>
             <div className="flex items-center gap-4">
               <Link
                 to="/dashboard"
-                className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition"
+                className="flex items-center gap-2 px-3 lg:px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition text-sm lg:text-base"
               >
                 <FaHome size={16} />
-                Home
+                <span className="hidden sm:inline">Home</span>
               </Link>
               <button
                 onClick={() => setIsEditing(!isEditing)}
                 disabled={isLoading}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                className={`flex items-center gap-2 px-3 lg:px-4 py-2 rounded-lg transition text-sm lg:text-base ${
+                  isEditing
+                    ? "bg-gray-500 text-white"
+                    : "bg-blue-600 text-white hover:bg-blue-700"
+                }`}
               >
                 <FaEdit size={16} />
-                {isEditing ? "Cancel Edit" : "Edit Profile"}
-              </button>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-              >
-                <FaSignOutAlt size={16} />
-                Logout
+                <span className="hidden sm:inline">{isEditing ? "Cancel" : "Edit"}</span>
               </button>
             </div>
           </div>
@@ -326,7 +324,7 @@ const ProfilePage = () => {
           className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6"
         >
           {/* Cover Photo */}
-          <div className="relative h-48 bg-gradient-to-r from-blue-500 to-purple-600">
+          <div className="relative h-32 sm:h-48 bg-gradient-to-r from-blue-500 to-purple-600">
             <img
               src={getFullImageUrl(editedUser.coverImg)}
               alt="Cover"
@@ -336,28 +334,22 @@ const ProfilePage = () => {
               }}
             />
             {isEditing && (
-              <>
+              <label className="absolute bottom-4 right-4 bg-white bg-opacity-90 hover:bg-opacity-100 rounded-full p-2 cursor-pointer transition">
+                <FaCamera className="text-gray-600" />
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleCoverImageChange}
                   className="hidden"
-                  id="coverImgUpload"
                 />
-                <label
-                  htmlFor="coverImgUpload"
-                  className="absolute top-4 right-4 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70 transition cursor-pointer"
-                >
-                  <FaCamera size={16} />
-                </label>
-              </>
+              </label>
             )}
           </div>
 
           {/* Profile Info */}
-          <div className="px-6 pb-6">
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between -mt-16 mb-4">
-              <div className="relative">
+          <div className="px-4 lg:px-6 pb-6">
+            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between -mt-12 sm:-mt-16 mb-4">
+              <div className="relative mb-4 lg:mb-0">
                 <img
                   src={
                     isEditing && editedUser.profileImg
@@ -367,46 +359,78 @@ const ProfilePage = () => {
                       : generateAvatarUrl(user.name)
                   }
                   alt={user.name}
-                  className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover"
+                  className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white shadow-lg object-cover"
                   onError={(e) => {
                     e.target.src = generateAvatarUrl(user.name);
                   }}
                 />
                 {isEditing && (
-                  <>
+                  <label className="absolute bottom-2 right-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-2 cursor-pointer transition">
+                    <FaCamera size={14} />
                     <input
                       type="file"
                       accept="image/*"
                       onChange={handleProfileImageChange}
                       className="hidden"
-                      id="profileImgUpload"
                     />
-                    <label
-                      htmlFor="profileImgUpload"
-                      className="absolute bottom-2 right-2 p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition cursor-pointer"
+                  </label>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-2">
+                {isEditing ? (
+                  <>
+                    <button
+                      onClick={handleSave}
+                      disabled={isLoading}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 text-sm lg:text-base"
                     >
-                      <FaCamera size={14} />
-                    </label>
+                      {isLoading ? "Saving..." : "Save Changes"}
+                    </button>
+                    <button
+                      onClick={handleCancel}
+                      className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition text-sm lg:text-base"
+                    >
+                      Cancel
+                    </button>
                   </>
+                ) : (
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm lg:text-base"
+                  >
+                    <FaSignOutAlt size={16} />
+                    Logout
+                  </button>
                 )}
               </div>
             </div>
 
+            {/* User Info */}
             <div className="space-y-2">
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={editedUser.name}
-                  onChange={(e) =>
-                    setEditedUser({ ...editedUser, name: e.target.value })
-                  }
-                  className="text-2xl font-bold text-gray-900 bg-gray-50 border border-gray-300 rounded px-3 py-1 w-full"
-                />
-              ) : (
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {user.name}
-                </h1>
-              )}
+              <div className="flex justify-between items-center">
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editedUser.name}
+                    onChange={(e) =>
+                      setEditedUser({ ...editedUser, name: e.target.value })
+                    }
+                    className="text-xl lg:text-2xl font-bold text-gray-900 bg-gray-50 border border-gray-300 rounded px-3 py-1 w-full"
+                  />
+                ) : (
+                  <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
+                    {user.name}
+                  </h1>
+                )}
+              </div>
+
+              {/* Email Display */}
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <FaEnvelope size={14} />
+                <span className="break-all">{user.email}</span>
+              </div>
 
               {isEditing ? (
                 <input
@@ -415,10 +439,11 @@ const ProfilePage = () => {
                   onChange={(e) =>
                     setEditedUser({ ...editedUser, title: e.target.value })
                   }
-                  className="text-lg text-gray-600 bg-gray-50 border border-gray-300 rounded px-3 py-1 w-full"
+                  className="text-base lg:text-lg text-gray-600 bg-gray-50 border border-gray-300 rounded px-3 py-1 w-full"
+                  placeholder="Your job title"
                 />
               ) : (
-                <p className="text-lg text-gray-600">{user.title}</p>
+                <p className="text-base lg:text-lg text-gray-600">{user.title}</p>
               )}
 
               <div className="flex flex-wrap gap-4 text-sm text-gray-500 mt-3">
@@ -429,7 +454,7 @@ const ProfilePage = () => {
                     onChange={(e) =>
                       setEditedUser({ ...editedUser, location: e.target.value })
                     }
-                    className="bg-gray-50 border border-gray-300 rounded px-2 py-1 text-sm"
+                    className="bg-gray-50 border border-gray-300 rounded px-2 py-1 text-sm flex-1 min-w-0"
                     placeholder="Your location"
                   />
                 ) : (
@@ -440,38 +465,38 @@ const ProfilePage = () => {
                 )}
               </div>
 
-              {isEditing ? (
-                <textarea
-                  value={editedUser.bio}
-                  onChange={(e) =>
-                    setEditedUser({ ...editedUser, bio: e.target.value })
-                  }
-                  className="w-full mt-4 p-3 bg-gray-50 border border-gray-300 rounded resize-none"
-                  rows="3"
-                  placeholder="Write about yourself"
-                />
-              ) : (
-                <p className="text-gray-700 mt-4">{user.bio}</p>
-              )}
+              {/* Bio */}
+              <div className="mt-4">
+                {isEditing ? (
+                  <textarea
+                    value={editedUser.bio}
+                    onChange={(e) =>
+                      setEditedUser({ ...editedUser, bio: e.target.value })
+                    }
+                    className="w-full bg-gray-50 border border-gray-300 rounded px-3 py-2 text-sm resize-none"
+                    rows="3"
+                    placeholder="Tell us about yourself..."
+                  />
+                ) : (
+                  <p className="text-gray-700 text-sm lg:text-base">{user.bio}</p>
+                )}
+              </div>
 
-              {isEditing && (
-                <div className="flex gap-3 mt-4">
-                  <button
-                    onClick={handleSave}
-                    disabled={isLoading}
-                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50"
-                  >
-                    {isLoading ? "Saving..." : "Save Changes"}
-                  </button>
-                  <button
-                    onClick={handleCancel}
-                    disabled={isLoading}
-                    className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
-                  >
-                    Cancel
-                  </button>
+              {/* Stats */}
+              <div className="flex flex-wrap gap-6 pt-4 border-t border-gray-200 text-sm">
+                <div className="text-center">
+                  <div className="font-semibold text-gray-900">{user.connections || 0}</div>
+                  <div className="text-gray-600">Connections</div>
                 </div>
-              )}
+                <div className="text-center">
+                  <div className="font-semibold text-gray-900">{user.followers || 0}</div>
+                  <div className="text-gray-600">Followers</div>
+                </div>
+                <div className="text-center">
+                  <div className="font-semibold text-gray-900">{posts.length}</div>
+                  <div className="text-gray-600">Posts</div>
+                </div>
+              </div>
             </div>
           </div>
         </motion.div>
@@ -481,11 +506,9 @@ const ProfilePage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+          className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6"
         >
-          <h3 className="text-xl font-semibold text-gray-900 mb-6">
-            Your Posts
-          </h3>
+          <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-6">Posts</h2>
 
           {isLoadingPosts ? (
             <div className="text-center py-8 text-gray-500">
@@ -510,13 +533,13 @@ const ProfilePage = () => {
                       <img
                         src={user.profileImg || generateAvatarUrl(user.name)}
                         alt={user.name}
-                        className="w-12 h-12 rounded-full object-cover"
+                        className="w-10 h-10 lg:w-12 lg:h-12 rounded-full object-cover flex-shrink-0"
                       />
-                      <div>
-                        <h4 className="font-semibold text-gray-900">
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-semibold text-gray-900 text-sm lg:text-base">
                           {user.name}
                         </h4>
-                        <p className="text-sm text-gray-600">{user.title}</p>
+                        <p className="text-xs lg:text-sm text-gray-600 truncate">{user.title}</p>
                         <p className="text-xs text-gray-500">
                           {formatTimeAgo(post.createdAt)}
                         </p>
@@ -526,20 +549,20 @@ const ProfilePage = () => {
                     {/* Delete button */}
                     <button
                       onClick={() => handleDeletePost(post._id)}
-                      className="text-gray-400 hover:text-red-500 transition p-2 rounded-lg hover:bg-gray-100"
+                      className="text-gray-400 hover:text-red-500 transition p-2 rounded-lg hover:bg-gray-100 flex-shrink-0"
                       title="Delete post"
                     >
-                      <FaTrash size={16} />
+                      <FaTrash size={14} />
                     </button>
                   </div>
 
-                  <p className="text-gray-800 mb-3">{post.content}</p>
+                  <p className="text-gray-800 mb-3 text-sm lg:text-base break-words">{post.content}</p>
 
                   {post.image && (
                     <img
                       src={post.image}
                       alt="Post content"
-                      className="w-full rounded-lg mb-3 object-cover max-h-96"
+                      className="w-full rounded-lg mb-3 object-cover max-h-64 lg:max-h-96"
                     />
                   )}
                 </motion.div>
@@ -553,5 +576,4 @@ const ProfilePage = () => {
 };
 
 export default ProfilePage;
-
 

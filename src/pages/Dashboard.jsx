@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
+import { useToast } from "../contexts/ToastContext";
 import axios from "axios";
 import {
   FaBars,
@@ -23,14 +23,14 @@ import { generateAvatarUrl, getImageWithFallback } from "../utils/defaultImages"
 import { getFullImageUrl } from "../utils/imageClean";
 
 const Dashboard = () => {
-  const navigate = useNavigate();
-  const [user, setUser] = useState({});
-  const [isExpanded, setIsExpanded] = useState(true);
-  const [isScrolled, setIsScrolled] = useState(false);
   const [posts, setPosts] = useState([]);
+  const [user, setUser] = useState({});
+  const [userName, setUserName] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-
-  const userName = JSON.parse(localStorage.getItem('user'))?.name || "User";
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleLogout = () => {
     // Clear localStorage
@@ -115,13 +115,12 @@ const Dashboard = () => {
       );
 
       if (response.data.success) {
-        toast.success("Post created successfully!");
-        // Add new post to the beginning of posts array
+        toast.success("Post created!", "Your post has been shared successfully");
         setPosts([response.data.post, ...posts]);
       }
     } catch (error) {
       console.error("Error creating post:", error);
-      toast.error("Failed to create post");
+      toast.error("Failed to create post", "Please try again");
       throw error;
     }
   };
@@ -148,6 +147,69 @@ const Dashboard = () => {
     });
   };
 
+  const handleLike = async (postId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.post(
+        `http://localhost:5000/api/posts/${postId}/like`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setPosts(posts.map(post => 
+          post._id === postId 
+            ? { 
+                ...post, 
+                likes: response.data.isLiked 
+                  ? [...(post.likes || []), user._id]
+                  : (post.likes || []).filter(id => id !== user._id),
+                likesCount: response.data.likesCount 
+              }
+            : post
+        ));
+      }
+    } catch (error) {
+      console.error("Error liking post:", error);
+      toast.error("Failed to like post", "Please try again");
+    }
+  };
+
+  const handleComment = async (postId, content) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.post(
+        `http://localhost:5000/api/posts/${postId}/comment`,
+        { content },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setPosts(posts.map(post => 
+          post._id === postId 
+            ? { 
+                ...post, 
+                comments: [...(post.comments || []), response.data.comment],
+                commentsCount: response.data.commentsCount 
+              }
+            : post
+        ));
+        toast.success("Comment added!", "Your comment has been posted");
+      }
+    } catch (error) {
+      console.error("Error adding comment:", error);
+      toast.error("Failed to add comment", "Please try again");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
@@ -157,63 +219,89 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gray-900 text-white">
+    <div className="flex flex-col lg:flex-row h-screen bg-gray-900 text-white">
+      {/* Mobile Header */}
+      <div className="lg:hidden bg-gray-800 p-4 border-b border-gray-700">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold text-blue-400">TalentThread</h2>
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="p-2 rounded-lg hover:bg-gray-700 transition"
+          >
+            <FaBars />
+          </button>
+        </div>
+      </div>
+
       {/* Sidebar */}
       <motion.aside
         initial={{ width: isExpanded ? 256 : 64 }}
-        animate={{ width: isExpanded ? 256 : 64 }}
-        className="bg-gray-800 transition-all duration-300 flex flex-col"
+        animate={{ width: isExpanded ? 256 : 74 }}
+        className={`${
+          isExpanded ? 'fixed inset-0 z-50 lg:relative lg:z-auto' : 'hidden'
+        } lg:flex bg-gray-800 transition-all duration-300 flex-col lg:w-auto`}
       >
-        <div className="p-4 border-b border-gray-700">
-          <div className="flex items-center justify-between">
-            {isExpanded && (
-              <h2 className="text-xl font-bold text-blue-400">TalentThread</h2>
-            )}
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="p-2 rounded-lg hover:bg-gray-700 transition"
+        {/* Mobile overlay */}
+        {isExpanded && (
+          <div 
+            className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+            onClick={() => setIsExpanded(false)}
+          />
+        )}
+        
+        <div className={`${isExpanded ? 'relative z-50 w-64' : ''} lg:w-auto bg-gray-800 h-full flex flex-col`}>
+          <div className="p-4 border-b border-gray-700">
+            <div className="flex items-center justify-between">
+              <h2 className={`text-xl font-bold text-blue-400 ${!isExpanded && 'lg:hidden'}`}>
+                TalentThread
+              </h2>
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="p-2 rounded-lg hover:bg-gray-700 transition"
+              >
+                {isExpanded ? <FaTimes /> : <FaBars />}
+              </button>
+            </div>
+          </div>
+
+          <nav className="flex-1 p-4">
+            <ul className="space-y-2">
+              {menuItems.map((item, index) => (
+                <li key={index}>
+                  <Link
+                    to={item.path}
+                    className="flex items-center gap-3 p-3 text-gray-300 hover:bg-gray-700 rounded-lg transition"
+                    onClick={() => window.innerWidth < 1024 && setIsExpanded(false)}
+                  >
+                    <item.icon className="text-xl flex-shrink-0" />
+                    <span className={`${!isExpanded && 'lg:hidden'}`}>{item.label}</span>
+                  </Link>
+                </li>
+              ))}
+              
+              <li>
+                <CreatePostDialog 
+                  trigger={
+                    <div className="flex items-center gap-3 p-3 text-gray-300 hover:bg-gray-700 rounded-lg transition cursor-pointer">
+                      <FaProjectDiagram className="text-xl flex-shrink-0" />
+                      <span className={`${!isExpanded && 'lg:hidden'}`}>Create Post</span>
+                    </div>
+                  }
+                  onPostCreate={handleCreatePost}
+                />
+              </li>
+            </ul>
+          </nav>
+
+          <div className="p-4 border-t border-gray-700">
+            <button 
+              onClick={handleLogout}
+              className="flex items-center gap-3 p-3 text-gray-300 hover:bg-gray-700 rounded-lg transition w-full"
             >
-              {isExpanded ? <FaTimes /> : <FaBars />}
+              <FaSignOutAlt className="text-xl text-red-500 flex-shrink-0" />
+              <span className={`text-red-500 ${!isExpanded && 'lg:hidden'}`}>Logout</span>
             </button>
           </div>
-        </div>
-
-        <nav className="flex-1 p-4">
-          <ul className="space-y-2">
-            {menuItems.map((item, index) => (
-              <li key={index}>
-                <Link
-                  to={item.path}
-                  className="flex items-center gap-3 p-3 text-gray-300 hover:bg-gray-700 rounded-lg transition"
-                >
-                  <item.icon className="text-xl" />
-                  {isExpanded && <span>{item.label}</span>}
-                </Link>
-              </li>
-            ))}
-            
-            <li>
-              <CreatePostDialog 
-                trigger={
-                  <div className="flex items-center gap-3 p-3 text-gray-300 hover:bg-gray-700 rounded-lg transition cursor-pointer">
-                    <FaProjectDiagram className="text-xl" />
-                    {isExpanded && <span>Create Post</span>}
-                  </div>
-                }
-                onPostCreate={handleCreatePost}
-              />
-            </li>
-          </ul>
-        </nav>
-
-        <div className="p-4 border-t border-gray-700">
-          <button 
-            onClick={handleLogout}
-            className="flex items-center gap-3 p-3 text-gray-300 hover:bg-gray-700 rounded-lg transition w-full"
-          >
-            <FaSignOutAlt className="text-xl text-red-500" />
-            {isExpanded && <span className="text-red-500">Logout</span>}
-          </button>
         </div>
       </motion.aside>
 
@@ -224,13 +312,15 @@ const Dashboard = () => {
           isScrolled 
             ? 'bg-gray-900/80 backdrop-blur-md shadow-lg border-b border-gray-700/50' 
             : 'bg-gray-900 shadow-sm border-b border-gray-700'
-        } p-6`}>
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold">
+        } p-4 lg:p-6`}>
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <h1 className="text-2xl lg:text-3xl font-bold">
               Welcome, <span className="text-blue-400">{userName}</span>
             </h1>
             <div className="flex items-center gap-4">
-              <CreatePostDialog onPostCreate={handleCreatePost} />
+              <div className="hidden sm:block">
+                <CreatePostDialog onPostCreate={handleCreatePost} />
+              </div>
               <FaRegBell className="text-gray-400 text-xl cursor-pointer hover:text-white transition" />
               <Link to="/profile">
                 <img
@@ -240,7 +330,7 @@ const Dashboard = () => {
                       : generateAvatarUrl(user.name || userName)
                   }
                   alt="Profile"
-                  className="w-10 h-10 rounded-full border-2 border-blue-400 object-cover"
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-blue-400 object-cover"
                   onError={(e) => {
                     e.target.src = generateAvatarUrl(user.name || userName);
                   }}
@@ -251,7 +341,7 @@ const Dashboard = () => {
         </header>
 
         {/* Posts Feed */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 lg:p-6">
           <div className="max-w-2xl mx-auto space-y-6">
             {posts.length === 0 ? (
               <div className="text-center text-gray-400 py-8">
@@ -264,7 +354,7 @@ const Dashboard = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="bg-gray-800 rounded-xl p-6 shadow-lg"
+                  className="bg-gray-800 rounded-xl p-4 lg:p-6 shadow-lg"
                 >
                   {/* Post Header */}
                   <div className="flex items-center gap-3 mb-4">
@@ -275,30 +365,112 @@ const Dashboard = () => {
                           : generateAvatarUrl(post.user.name)
                       }
                       alt={post.user.name}
-                      className="w-12 h-12 rounded-full object-cover"
+                      className="w-10 h-10 lg:w-12 lg:h-12 rounded-full object-cover"
                       onError={(e) => {
                         e.target.src = generateAvatarUrl(post.user.name);
                       }}
                     />
                     <div>
-                      <h4 className="font-semibold text-white">{post.user.name}</h4>
-                      <p className="text-sm text-gray-400">
+                      <h4 className="font-semibold text-white text-sm lg:text-base">{post.user.name}</h4>
+                      <p className="text-xs lg:text-sm text-gray-400">
                         {formatTimeAgo(post.createdAt)}
                       </p>
                     </div>
                   </div>
 
                   {/* Post Content */}
-                  <p className="text-gray-300 mb-4">{post.content}</p>
+                  <p className="text-gray-300 mb-4 text-sm lg:text-base">{post.content}</p>
 
                   {/* Post Image */}
                   {post.image && (
                     <img
                       src={post.image}
                       alt="Post content"
-                      className="w-full rounded-lg object-cover max-h-96"
+                      className="w-full rounded-lg object-cover max-h-64 lg:max-h-96"
                     />
                   )}
+
+                  {/* Post Actions */}
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-700">
+                    <div className="flex items-center gap-4 lg:gap-6">
+                      <button
+                        onClick={() => handleLike(post._id)}
+                        className={`flex items-center gap-2 transition text-sm lg:text-base ${
+                          post.likes?.includes(user._id)
+                            ? "text-red-500"
+                            : "text-gray-400 hover:text-red-500"
+                        }`}
+                      >
+                        <FaHeart className={post.likes?.includes(user._id) ? "fill-current" : ""} />
+                        <span>{post.likesCount || post.likes?.length || 0}</span>
+                      </button>
+                      
+                      <button className="flex items-center gap-2 text-gray-400 hover:text-blue-400 transition text-sm lg:text-base">
+                        <FaComment />
+                        <span>{post.commentsCount || post.comments?.length || 0}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Comments Section */}
+                  {post.comments && post.comments.length > 0 && (
+                    <div className="mt-4 space-y-3">
+                      {post.comments.slice(0, 2).map((comment, idx) => (
+                        <div key={idx} className="flex gap-3">
+                          <img
+                            src={
+                              comment.user.profileImg
+                                ? getFullImageUrl(comment.user.profileImg)
+                                : generateAvatarUrl(comment.user.name)
+                            }
+                            alt={comment.user.name}
+                            className="w-6 h-6 lg:w-8 lg:h-8 rounded-full object-cover flex-shrink-0"
+                          />
+                          <div className="flex-1 bg-gray-700 rounded-lg p-3">
+                            <h5 className="font-semibold text-white text-xs lg:text-sm">{comment.user.name}</h5>
+                            <p className="text-gray-300 text-xs lg:text-sm">{comment.content}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add Comment */}
+                  <div className="mt-4 flex gap-3">
+                    <img
+                      src={
+                        user.profileImg
+                          ? getFullImageUrl(user.profileImg)
+                          : generateAvatarUrl(user.name || userName)
+                      }
+                      alt="Your profile"
+                      className="w-6 h-6 lg:w-8 lg:h-8 rounded-full object-cover flex-shrink-0"
+                    />
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        const content = e.target.comment.value.trim();
+                        if (content) {
+                          handleComment(post._id, content);
+                          e.target.comment.value = "";
+                        }
+                      }}
+                      className="flex-1 flex gap-2"
+                    >
+                      <input
+                        name="comment"
+                        type="text"
+                        placeholder="Write a comment..."
+                        className="flex-1 bg-gray-700 border border-gray-600 rounded-full px-3 lg:px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 text-sm lg:text-base"
+                      />
+                      <button
+                        type="submit"
+                        className="px-3 lg:px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition text-sm lg:text-base"
+                      >
+                        Post
+                      </button>
+                    </form>
+                  </div>
                 </motion.div>
               ))
             )}
@@ -310,6 +482,10 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
+
+
+
 
 
 

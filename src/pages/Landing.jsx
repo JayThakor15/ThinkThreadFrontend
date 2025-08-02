@@ -7,6 +7,7 @@ import {
   FaBriefcase,
   FaNetworkWired,
 } from "react-icons/fa";
+import Footer from "./Footer";
 
 const Landing = () => {
   return (
@@ -132,6 +133,7 @@ const Landing = () => {
           ))}
         </div>
       </div>
+      <Footer/>
     </div>
   );
 };
