@@ -19,9 +19,12 @@ import {
   FaProjectDiagram,
 } from "react-icons/fa";
 import CreatePostDialog from "../components/CreatePostDialog";
+import { generateAvatarUrl, getImageWithFallback } from "../utils/defaultImages";
+import { getFullImageUrl } from "../utils/imageClean";
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const [user, setUser] = useState({});
   const [isExpanded, setIsExpanded] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
   const [posts, setPosts] = useState([]);
@@ -39,6 +42,26 @@ const Dashboard = () => {
     
     // Redirect to login
     navigate('/login');
+  };
+
+  const fetchUserProfile = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        "http://localhost:5000/api/user/profile",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data) {
+        setUser(response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
   };
 
   useEffect(() => {
@@ -73,6 +96,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchPosts();
+    fetchUserProfile();
   }, []);
 
   const handleCreatePost = async (formData) => {
@@ -210,9 +234,16 @@ const Dashboard = () => {
               <FaRegBell className="text-gray-400 text-xl cursor-pointer hover:text-white transition" />
               <Link to="/profile">
                 <img
-                  src="https://randomuser.me/api/portraits/men/1.jpg"
+                  src={
+                    user.profileImg
+                      ? getFullImageUrl(user.profileImg)
+                      : generateAvatarUrl(user.name || userName)
+                  }
                   alt="Profile"
-                  className="w-10 h-10 rounded-full border-2 border-blue-400"
+                  className="w-10 h-10 rounded-full border-2 border-blue-400 object-cover"
+                  onError={(e) => {
+                    e.target.src = generateAvatarUrl(user.name || userName);
+                  }}
                 />
               </Link>
             </div>
@@ -238,9 +269,16 @@ const Dashboard = () => {
                   {/* Post Header */}
                   <div className="flex items-center gap-3 mb-4">
                     <img
-                      src={post.user.profileImg || "https://randomuser.me/api/portraits/men/1.jpg"}
+                      src={
+                        post.user.profileImg
+                          ? getFullImageUrl(post.user.profileImg)
+                          : generateAvatarUrl(post.user.name)
+                      }
                       alt={post.user.name}
                       className="w-12 h-12 rounded-full object-cover"
+                      onError={(e) => {
+                        e.target.src = generateAvatarUrl(post.user.name);
+                      }}
                     />
                     <div>
                       <h4 className="font-semibold text-white">{post.user.name}</h4>
@@ -272,5 +310,9 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
+
+
+
 
 

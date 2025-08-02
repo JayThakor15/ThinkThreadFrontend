@@ -23,12 +23,12 @@ import {
   generateAvatarUrl,
 } from "../utils/defaultImages";
 import { useNavigate, Link } from "react-router-dom";
+import { getFullImageUrl } from "../utils/imageClean";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState({
     name: "",
-
     title: "",
     location: "",
     bio: "",
@@ -104,11 +104,11 @@ const ProfilePage = () => {
       formData.append("location", editedUser.location);
       formData.append("bio", editedUser.bio);
 
-      if (editedUser.profileImgFile) {
+      if (editedUser.profileImg) {
         formData.append("profileImg", editedUser.profileImgFile);
       }
 
-      if (editedUser.coverImgFile) {
+      if (editedUser.coverImg) {
         formData.append("coverImg", editedUser.coverImgFile);
       }
 
@@ -328,10 +328,7 @@ const ProfilePage = () => {
           {/* Cover Photo */}
           <div className="relative h-48 bg-gradient-to-r from-blue-500 to-purple-600">
             <img
-              src={getImageWithFallback(
-                isEditing ? editedUser.coverImg : user.coverImg,
-                "cover"
-              )}
+              src={getFullImageUrl(editedUser.coverImg)}
               alt="Cover"
               className="w-full h-full object-cover"
               onError={(e) => {
@@ -362,10 +359,13 @@ const ProfilePage = () => {
             <div className="flex flex-col md:flex-row md:items-end md:justify-between -mt-16 mb-4">
               <div className="relative">
                 <img
-                  src={getImageWithFallback(
-                    isEditing ? editedUser.profileImg : user.profileImg,
-                    "profile"
-                  )}
+                  src={
+                    isEditing && editedUser.profileImg
+                      ? editedUser.profileImg
+                      : user.profileImg
+                      ? getFullImageUrl(user.profileImg)
+                      : generateAvatarUrl(user.name)
+                  }
                   alt={user.name}
                   className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover"
                   onError={(e) => {
@@ -553,3 +553,5 @@ const ProfilePage = () => {
 };
 
 export default ProfilePage;
+
+
