@@ -94,28 +94,8 @@ function Footer() {
             </div>
           </div>
           <p className="text-gray-400 text-sm mb-4">
-            © 2024 TalentThread. All rights reserved.
+            Made with ❤️ by Jay Thakor.
           </p>
-          <div className="flex gap-6 justify-center">
-            <a
-              href="#privacy"
-              className="text-gray-400 hover:text-white text-sm transition-colors"
-            >
-              Privacy Policy
-            </a>
-            <a
-              href="#terms"
-              className="text-gray-400 hover:text-white text-sm transition-colors"
-            >
-              Terms of Service
-            </a>
-            <a
-              href="#cookies"
-              className="text-gray-400 hover:text-white text-sm transition-colors"
-            >
-              Cookie Policy
-            </a>
-          </div>
         </div>
       </div>
     </footer>
