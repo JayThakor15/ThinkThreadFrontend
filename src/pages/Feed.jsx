@@ -37,7 +37,7 @@ const Feed = () => {
   const fetchPosts = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:5000/api/posts", {
+      const response = await axios.get("https://thinkthreadbackend.onrender.com/api/posts", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -59,7 +59,7 @@ const Feed = () => {
       const token = localStorage.getItem("token");
       
       const response = await axios.post(
-        "http://localhost:5000/api/posts",
+        "https://thinkthreadbackend.onrender.com/api/posts",
         formData,
         {
           headers: {

@@ -65,7 +65,7 @@ const ProfilePage = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        "http://localhost:5000/api/user/profile",
+        "https://thinkthreadbackend.onrender.com/api/user/profile",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -114,7 +114,7 @@ const ProfilePage = () => {
       }
 
       const response = await axios.put(
-        "http://localhost:5000/api/user/profile",
+        "https://thinkthreadbackend.onrender.com/api/user/profile",
         formData,
         {
           headers: {
@@ -215,11 +215,14 @@ const ProfilePage = () => {
   const fetchUserPosts = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:5000/api/posts/user", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axios.get(
+        "https://thinkthreadbackend.onrender.com/api/posts/user",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (response.data.success) {
         setPosts(response.data.posts);
@@ -240,7 +243,7 @@ const ProfilePage = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.delete(
-        `http://localhost:5000/api/posts/${postId}`,
+        `https://thinkthreadbackend.onrender.com/api/posts/${postId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -290,7 +293,9 @@ const ProfilePage = () => {
       >
         <div className="max-w-6xl mx-auto px-4 py-3">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h1 className="text-xl lg:text-2xl font-bold text-blue-600">TalentThread</h1>
+            <h1 className="text-xl lg:text-2xl font-bold text-blue-600">
+              TalentThread
+            </h1>
             <div className="flex items-center gap-4">
               <Link
                 to="/dashboard"
@@ -309,7 +314,9 @@ const ProfilePage = () => {
                 }`}
               >
                 <FaEdit size={16} />
-                <span className="hidden sm:inline">{isEditing ? "Cancel" : "Edit"}</span>
+                <span className="hidden sm:inline">
+                  {isEditing ? "Cancel" : "Edit"}
+                </span>
               </button>
             </div>
           </div>
@@ -443,7 +450,9 @@ const ProfilePage = () => {
                   placeholder="Your job title"
                 />
               ) : (
-                <p className="text-base lg:text-lg text-gray-600">{user.title}</p>
+                <p className="text-base lg:text-lg text-gray-600">
+                  {user.title}
+                </p>
               )}
 
               <div className="flex flex-wrap gap-4 text-sm text-gray-500 mt-3">
@@ -478,22 +487,30 @@ const ProfilePage = () => {
                     placeholder="Tell us about yourself..."
                   />
                 ) : (
-                  <p className="text-gray-700 text-sm lg:text-base">{user.bio}</p>
+                  <p className="text-gray-700 text-sm lg:text-base">
+                    {user.bio}
+                  </p>
                 )}
               </div>
 
               {/* Stats */}
               <div className="flex flex-wrap gap-6 pt-4 border-t border-gray-200 text-sm">
                 <div className="text-center">
-                  <div className="font-semibold text-gray-900">{user.connections || 0}</div>
+                  <div className="font-semibold text-gray-900">
+                    {user.connections || 0}
+                  </div>
                   <div className="text-gray-600">Connections</div>
                 </div>
                 <div className="text-center">
-                  <div className="font-semibold text-gray-900">{user.followers || 0}</div>
+                  <div className="font-semibold text-gray-900">
+                    {user.followers || 0}
+                  </div>
                   <div className="text-gray-600">Followers</div>
                 </div>
                 <div className="text-center">
-                  <div className="font-semibold text-gray-900">{posts.length}</div>
+                  <div className="font-semibold text-gray-900">
+                    {posts.length}
+                  </div>
                   <div className="text-gray-600">Posts</div>
                 </div>
               </div>
@@ -508,7 +525,9 @@ const ProfilePage = () => {
           transition={{ delay: 0.2 }}
           className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6"
         >
-          <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-6">Posts</h2>
+          <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-6">
+            Posts
+          </h2>
 
           {isLoadingPosts ? (
             <div className="text-center py-8 text-gray-500">
@@ -539,7 +558,9 @@ const ProfilePage = () => {
                         <h4 className="font-semibold text-gray-900 text-sm lg:text-base">
                           {user.name}
                         </h4>
-                        <p className="text-xs lg:text-sm text-gray-600 truncate">{user.title}</p>
+                        <p className="text-xs lg:text-sm text-gray-600 truncate">
+                          {user.title}
+                        </p>
                         <p className="text-xs text-gray-500">
                           {formatTimeAgo(post.createdAt)}
                         </p>
@@ -556,7 +577,9 @@ const ProfilePage = () => {
                     </button>
                   </div>
 
-                  <p className="text-gray-800 mb-3 text-sm lg:text-base break-words">{post.content}</p>
+                  <p className="text-gray-800 mb-3 text-sm lg:text-base break-words">
+                    {post.content}
+                  </p>
 
                   {post.image && (
                     <img
@@ -576,4 +599,3 @@ const ProfilePage = () => {
 };
 
 export default ProfilePage;
-

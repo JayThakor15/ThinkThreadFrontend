@@ -19,7 +19,10 @@ import {
   FaProjectDiagram,
 } from "react-icons/fa";
 import CreatePostDialog from "../components/CreatePostDialog";
-import { generateAvatarUrl, getImageWithFallback } from "../utils/defaultImages";
+import {
+  generateAvatarUrl,
+  getImageWithFallback,
+} from "../utils/defaultImages";
 import { getFullImageUrl } from "../utils/imageClean";
 
 const Dashboard = () => {
@@ -34,21 +37,21 @@ const Dashboard = () => {
 
   const handleLogout = () => {
     // Clear localStorage
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
     // Show success message
-    toast.success('Logged out successfully');
-    
+    toast.success("Logged out successfully");
+
     // Redirect to login
-    navigate('/login');
+    navigate("/login");
   };
 
   const fetchUserProfile = async () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        "http://localhost:5000/api/user/profile",
+        "https://thinkthreadbackend.onrender.com/api/user/profile",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -70,14 +73,14 @@ const Dashboard = () => {
       setIsScrolled(scrollTop > 10);
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const fetchPosts = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:5000/api/posts", {
+      const response = await axios.get("https://thinkthreadbackend.onrender.com/api/posts", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -102,9 +105,9 @@ const Dashboard = () => {
   const handleCreatePost = async (formData) => {
     try {
       const token = localStorage.getItem("token");
-      
+
       const response = await axios.post(
-        "http://localhost:5000/api/posts",
+        "https://thinkthreadbackend.onrender.com/api/posts",
         formData,
         {
           headers: {
@@ -115,7 +118,10 @@ const Dashboard = () => {
       );
 
       if (response.data.success) {
-        toast.success("Post created!", "Your post has been shared successfully");
+        toast.success(
+          "Post created!",
+          "Your post has been shared successfully"
+        );
         setPosts([response.data.post, ...posts]);
       }
     } catch (error) {
@@ -125,10 +131,7 @@ const Dashboard = () => {
     }
   };
 
-  const menuItems = [
-    { icon: FaHome, label: "Home", path: "/dashboard" },
-
-  ];
+  const menuItems = [{ icon: FaHome, label: "Home", path: "/dashboard" }];
 
   const formatTimeAgo = (dateString) => {
     const now = new Date();
@@ -137,13 +140,16 @@ const Dashboard = () => {
 
     if (diffInSeconds < 60) return "Just now";
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-    
-    return postDate.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: postDate.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+    if (diffInSeconds < 86400)
+      return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    if (diffInSeconds < 604800)
+      return `${Math.floor(diffInSeconds / 86400)}d ago`;
+
+    return postDate.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year:
+        postDate.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
     });
   };
 
@@ -151,7 +157,7 @@ const Dashboard = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        `http://localhost:5000/api/posts/${postId}/like`,
+        `https://thinkthreadbackend.onrender.com/api/posts/${postId}/like`,
         {},
         {
           headers: {
@@ -161,17 +167,19 @@ const Dashboard = () => {
       );
 
       if (response.data.success) {
-        setPosts(posts.map(post => 
-          post._id === postId 
-            ? { 
-                ...post, 
-                likes: response.data.isLiked 
-                  ? [...(post.likes || []), user._id]
-                  : (post.likes || []).filter(id => id !== user._id),
-                likesCount: response.data.likesCount 
-              }
-            : post
-        ));
+        setPosts(
+          posts.map((post) =>
+            post._id === postId
+              ? {
+                  ...post,
+                  likes: response.data.isLiked
+                    ? [...(post.likes || []), user._id]
+                    : (post.likes || []).filter((id) => id !== user._id),
+                  likesCount: response.data.likesCount,
+                }
+              : post
+          )
+        );
       }
     } catch (error) {
       console.error("Error liking post:", error);
@@ -183,7 +191,7 @@ const Dashboard = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        `http://localhost:5000/api/posts/${postId}/comment`,
+        `https://thinkthreadbackend.onrender.com/api/posts/${postId}/comment`,
         { content },
         {
           headers: {
@@ -193,15 +201,17 @@ const Dashboard = () => {
       );
 
       if (response.data.success) {
-        setPosts(posts.map(post => 
-          post._id === postId 
-            ? { 
-                ...post, 
-                comments: [...(post.comments || []), response.data.comment],
-                commentsCount: response.data.commentsCount 
-              }
-            : post
-        ));
+        setPosts(
+          posts.map((post) =>
+            post._id === postId
+              ? {
+                  ...post,
+                  comments: [...(post.comments || []), response.data.comment],
+                  commentsCount: response.data.commentsCount,
+                }
+              : post
+          )
+        );
         toast.success("Comment added!", "Your comment has been posted");
       }
     } catch (error) {
@@ -238,21 +248,29 @@ const Dashboard = () => {
         initial={{ width: isExpanded ? 256 : 64 }}
         animate={{ width: isExpanded ? 256 : 74 }}
         className={`${
-          isExpanded ? 'fixed inset-0 z-50 lg:relative lg:z-auto' : 'hidden'
+          isExpanded ? "fixed inset-0 z-50 lg:relative lg:z-auto" : "hidden"
         } lg:flex bg-gray-800 transition-all duration-300 flex-col lg:w-auto`}
       >
         {/* Mobile overlay */}
         {isExpanded && (
-          <div 
+          <div
             className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
             onClick={() => setIsExpanded(false)}
           />
         )}
-        
-        <div className={`${isExpanded ? 'relative z-50 w-64' : ''} lg:w-auto bg-gray-800 h-full flex flex-col`}>
+
+        <div
+          className={`${
+            isExpanded ? "relative z-50 w-64" : ""
+          } lg:w-auto bg-gray-800 h-full flex flex-col`}
+        >
           <div className="p-4 border-b border-gray-700">
             <div className="flex items-center justify-between">
-              <h2 className={`text-xl font-bold text-blue-400 ${!isExpanded && 'lg:hidden'}`}>
+              <h2
+                className={`text-xl font-bold text-blue-400 ${
+                  !isExpanded && "lg:hidden"
+                }`}
+              >
                 TalentThread
               </h2>
               <button
@@ -271,20 +289,26 @@ const Dashboard = () => {
                   <Link
                     to={item.path}
                     className="flex items-center gap-3 p-3 text-gray-300 hover:bg-gray-700 rounded-lg transition"
-                    onClick={() => window.innerWidth < 1024 && setIsExpanded(false)}
+                    onClick={() =>
+                      window.innerWidth < 1024 && setIsExpanded(false)
+                    }
                   >
                     <item.icon className="text-xl flex-shrink-0" />
-                    <span className={`${!isExpanded && 'lg:hidden'}`}>{item.label}</span>
+                    <span className={`${!isExpanded && "lg:hidden"}`}>
+                      {item.label}
+                    </span>
                   </Link>
                 </li>
               ))}
-              
+
               <li>
-                <CreatePostDialog 
+                <CreatePostDialog
                   trigger={
                     <div className="flex items-center gap-3 p-3 text-gray-300 hover:bg-gray-700 rounded-lg transition cursor-pointer">
                       <FaProjectDiagram className="text-xl flex-shrink-0" />
-                      <span className={`${!isExpanded && 'lg:hidden'}`}>Create Post</span>
+                      <span className={`${!isExpanded && "lg:hidden"}`}>
+                        Create Post
+                      </span>
                     </div>
                   }
                   onPostCreate={handleCreatePost}
@@ -294,12 +318,14 @@ const Dashboard = () => {
           </nav>
 
           <div className="p-4 border-t border-gray-700">
-            <button 
+            <button
               onClick={handleLogout}
               className="flex items-center gap-3 p-3 text-gray-300 hover:bg-gray-700 rounded-lg transition w-full"
             >
               <FaSignOutAlt className="text-xl text-red-500 flex-shrink-0" />
-              <span className={`text-red-500 ${!isExpanded && 'lg:hidden'}`}>Logout</span>
+              <span className={`text-red-500 ${!isExpanded && "lg:hidden"}`}>
+                Logout
+              </span>
             </button>
           </div>
         </div>
@@ -308,11 +334,13 @@ const Dashboard = () => {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className={`transition-all duration-300 ${
-          isScrolled 
-            ? 'bg-gray-900/80 backdrop-blur-md shadow-lg border-b border-gray-700/50' 
-            : 'bg-gray-900 shadow-sm border-b border-gray-700'
-        } p-4 lg:p-6`}>
+        <header
+          className={`transition-all duration-300 ${
+            isScrolled
+              ? "bg-gray-900/80 backdrop-blur-md shadow-lg border-b border-gray-700/50"
+              : "bg-gray-900 shadow-sm border-b border-gray-700"
+          } p-4 lg:p-6`}
+        >
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <h1 className="text-2xl lg:text-3xl font-bold">
               Welcome, <span className="text-blue-400">{userName}</span>
@@ -371,7 +399,9 @@ const Dashboard = () => {
                       }}
                     />
                     <div>
-                      <h4 className="font-semibold text-white text-sm lg:text-base">{post.user.name}</h4>
+                      <h4 className="font-semibold text-white text-sm lg:text-base">
+                        {post.user.name}
+                      </h4>
                       <p className="text-xs lg:text-sm text-gray-400">
                         {formatTimeAgo(post.createdAt)}
                       </p>
@@ -379,7 +409,9 @@ const Dashboard = () => {
                   </div>
 
                   {/* Post Content */}
-                  <p className="text-gray-300 mb-4 text-sm lg:text-base">{post.content}</p>
+                  <p className="text-gray-300 mb-4 text-sm lg:text-base">
+                    {post.content}
+                  </p>
 
                   {/* Post Image */}
                   {post.image && (
@@ -401,13 +433,21 @@ const Dashboard = () => {
                             : "text-gray-400 hover:text-red-500"
                         }`}
                       >
-                        <FaHeart className={post.likes?.includes(user._id) ? "fill-current" : ""} />
-                        <span>{post.likesCount || post.likes?.length || 0}</span>
+                        <FaHeart
+                          className={
+                            post.likes?.includes(user._id) ? "fill-current" : ""
+                          }
+                        />
+                        <span>
+                          {post.likesCount || post.likes?.length || 0}
+                        </span>
                       </button>
-                      
+
                       <button className="flex items-center gap-2 text-gray-400 hover:text-blue-400 transition text-sm lg:text-base">
                         <FaComment />
-                        <span>{post.commentsCount || post.comments?.length || 0}</span>
+                        <span>
+                          {post.commentsCount || post.comments?.length || 0}
+                        </span>
                       </button>
                     </div>
                   </div>
@@ -427,8 +467,12 @@ const Dashboard = () => {
                             className="w-6 h-6 lg:w-8 lg:h-8 rounded-full object-cover flex-shrink-0"
                           />
                           <div className="flex-1 bg-gray-700 rounded-lg p-3">
-                            <h5 className="font-semibold text-white text-xs lg:text-sm">{comment.user.name}</h5>
-                            <p className="text-gray-300 text-xs lg:text-sm">{comment.content}</p>
+                            <h5 className="font-semibold text-white text-xs lg:text-sm">
+                              {comment.user.name}
+                            </h5>
+                            <p className="text-gray-300 text-xs lg:text-sm">
+                              {comment.content}
+                            </p>
                           </div>
                         </div>
                       ))}
@@ -482,13 +526,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
-
-
-
-
-
-
-
-
-
