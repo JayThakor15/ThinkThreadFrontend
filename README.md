@@ -38,6 +38,9 @@ A modern, responsive frontend for the TalentThread professional social networkin
 - **React Icons 5.5.0** - Comprehensive icon library
 
 ## 🚀 Quick Start
+### Demo User Credentials
+ - email: jay111@gmail.com
+ - password: jay111
 
 ### Prerequisites
 - Node.js (v16 or higher)
