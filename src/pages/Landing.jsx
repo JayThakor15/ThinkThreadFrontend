@@ -1,15 +1,19 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { FiMenu, FiX } from "react-icons/fi";
 import {
   FaArrowRight,
   FaUsers,
   FaBriefcase,
   FaNetworkWired,
+  FaUser,
+  FaUserPlus,
 } from "react-icons/fa";
 import Footer from "./Footer";
 
 const Landing = () => {
+  const [isOpen, setIsOpen] = useState(false);
   return (
     <div className="min-h-screen bg-gray-900">
       {/* Navigation */}
@@ -21,25 +25,71 @@ const Landing = () => {
         >
           TalentThread
         </motion.div>
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="flex gap-4"
-        >
-          <Link
-            to="/login"
-            className="px-6 py-2 text-gray-300 border border-gray-600 rounded-lg hover:bg-gray-800 hover:text-white transition"
+        <div className="hidden sm:flex ">
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex gap-4"
           >
-            Login
-          </Link>
-          <Link
-            to="/register"
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            <Link
+              to="/login"
+              className=" px-6 py-2 text-gray-300 border border-gray-600 rounded-lg hover:bg-gray-800 hover:text-white transition"
+            >
+              Login
+            </Link>
+            <Link
+              to="/register"
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            >
+              Sign Up
+            </Link>
+          </motion.div>
+        </div>
+        <div className="flex md:hidden">
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex gap-4"
           >
-            Sign Up
-          </Link>
-        </motion.div>
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="flex items-center gap-2 px-4 py-2 text-gray-300 border border-gray-600 rounded-lg hover:bg-gray-800 hover:text-white transition-all duration-200"
+            >
+              {isOpen ? <FiX className="text-lg" /> : <FiMenu className="text-lg" />}
+            </button>
+          </motion.div>
+        </div>
+        {/* Mobile Menu */}
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="sm:hidden bg-gray-800/95 backdrop-blur-md border border-gray-700 rounded-xl absolute right-4 top-16 min-w-[200px] shadow-xl z-50"
+          >
+            <div className="p-4 space-y-3">
+              <Link
+                to="/login"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-3 w-full px-4 py-3 text-gray-300 border border-gray-600 rounded-lg hover:bg-gray-700 hover:text-white transition-all duration-200"
+              >
+                <FaUser className="text-sm" />
+                <span>Login</span>
+              </Link>
+              <Link
+                to="/register"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-3 w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200"
+              >
+                <FaUserPlus className="text-sm" />
+                <span>Sign Up</span>
+              </Link>
+            </div>
+          </motion.div>
+        )}
       </nav>
+
+      {/* Mobile Menu */}
 
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-6 py-20">
@@ -133,7 +183,7 @@ const Landing = () => {
           ))}
         </div>
       </div>
-      <Footer/>
+      <Footer />
     </div>
   );
 };

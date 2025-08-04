@@ -35,6 +35,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  
   const handleLogout = () => {
     // Clear localStorage
     localStorage.removeItem("token");
@@ -72,6 +73,8 @@ const Dashboard = () => {
       const scrollTop = window.scrollY;
       setIsScrolled(scrollTop > 10);
     };
+    const userName = localStorage.getItem("user");
+    setUserName(JSON.parse(userName).name);
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
@@ -233,13 +236,32 @@ const Dashboard = () => {
       {/* Mobile Header */}
       <div className="lg:hidden bg-gray-800 p-4 border-b border-gray-700">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-blue-400">TalentThread</h2>
+          {/* Hamburger Menu - Left */}
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className="p-2 rounded-lg hover:bg-gray-700 transition"
           >
             <FaBars />
           </button>
+
+          {/* Logo - Center */}
+          <h2 className="text-xl font-bold text-blue-400">TalentThread</h2>
+
+          {/* User Profile - Right */}
+          <Link to="/profile">
+            <img
+              src={
+                user.profileImg
+                  ? getFullImageUrl(user.profileImg)
+                  : generateAvatarUrl(user.name || userName)
+              }
+              alt="Profile"
+              className="w-8 h-8 rounded-full border-2 border-blue-400 object-cover"
+              onError={(e) => {
+                e.target.src = generateAvatarUrl(user.name || userName);
+              }}
+            />
+          </Link>
         </div>
       </div>
 
@@ -349,21 +371,7 @@ const Dashboard = () => {
               <div className="hidden sm:block">
                 <CreatePostDialog onPostCreate={handleCreatePost} />
               </div>
-              <FaRegBell className="text-gray-400 text-xl cursor-pointer hover:text-white transition" />
-              <Link to="/profile">
-                <img
-                  src={
-                    user.profileImg
-                      ? getFullImageUrl(user.profileImg)
-                      : generateAvatarUrl(user.name || userName)
-                  }
-                  alt="Profile"
-                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-blue-400 object-cover"
-                  onError={(e) => {
-                    e.target.src = generateAvatarUrl(user.name || userName);
-                  }}
-                />
-              </Link>
+              
             </div>
           </div>
         </header>
@@ -526,3 +534,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
