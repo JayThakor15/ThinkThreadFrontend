@@ -35,7 +35,6 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  
   const handleLogout = () => {
     // Clear localStorage
     localStorage.removeItem("token");
@@ -83,11 +82,14 @@ const Dashboard = () => {
   const fetchPosts = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("https://thinkthreadbackend.onrender.com/api/posts", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axios.get(
+        "https://thinkthreadbackend.onrender.com/api/posts",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (response.data.success) {
         setPosts(response.data.posts);
@@ -371,7 +373,21 @@ const Dashboard = () => {
               <div className="hidden sm:block">
                 <CreatePostDialog onPostCreate={handleCreatePost} />
               </div>
-              
+              {/* Add Profile Icon */}
+              <Link to="/profile" className="hidden lg:block">
+                <img
+                  src={
+                    user.profileImg
+                      ? getFullImageUrl(user.profileImg)
+                      : generateAvatarUrl(user.name || userName)
+                  }
+                  alt="Profile"
+                  className="w-10 h-10 rounded-full border-2 border-blue-400 object-cover hover:border-blue-500 transition-colors"
+                  onError={(e) => {
+                    e.target.src = generateAvatarUrl(user.name || userName);
+                  }}
+                />
+              </Link>
             </div>
           </div>
         </header>
@@ -534,4 +550,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
